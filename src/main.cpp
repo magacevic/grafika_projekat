@@ -30,9 +30,11 @@ unsigned int loadTexture(char const * path, bool gammaCorrection);
 
 void drawPlane(Shader shader, unsigned int VAO, unsigned int texture);
 
+void drawGrass(Shader shader , unsigned int VAO, unsigned int texture);
+
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
 
 // camera
 
@@ -159,7 +161,7 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
-    // vertex data for plane
+    // vertex data
 
     float planeVertices[] = {
             // positions                     // normals                       // texcoords
@@ -172,6 +174,17 @@ int main() {
             1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,  500.0f, 500.0f
     };
 
+    float grassVertices[] = {
+            // positions                    // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
@@ -179,6 +192,7 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader lightingShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
+    Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
 
     // load models
     // -----------
@@ -189,6 +203,7 @@ int main() {
     // -------------
 
     unsigned int planeTexture = loadTexture(FileSystem::getPath("resources/textures/151_green grass texture-seamless.jpg").c_str(), true);
+    unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/kindpng_163593.png").c_str(), false);
 
     // plane VAO
     unsigned int planeVAO, planeVBO;
@@ -205,11 +220,27 @@ int main() {
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
+    // grass VAO
+    unsigned int grassVAO, grassVBO;
+    glGenVertexArrays(1, &grassVAO);
+    glGenBuffers(1, &grassVBO);
+    glBindVertexArray(grassVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, grassVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(grassVertices), grassVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+
     //shader configuration
     //--------------------
     lightingShader.use();
     lightingShader.setInt("material.texture_diffuse1", 0);
     lightingShader.setInt("material.texture_specular1", 1);
+
+    blendingShader.use();
+    blendingShader.setInt("texture1", 0);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -270,6 +301,8 @@ int main() {
 
         drawPlane(lightingShader, planeVAO, planeTexture);
 
+        drawGrass(blendingShader , grassVAO, grassTexture);
+
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
@@ -286,6 +319,10 @@ int main() {
     ImGui::DestroyContext();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+
+    glDeleteVertexArrays(1, &planeVAO);
+    glDeleteBuffers(1, &planeVBO);
+
     glfwTerminate();
     return 0;
 }
@@ -352,6 +389,62 @@ void drawPlane(Shader shader, unsigned int VAO, unsigned int texture) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+
+void drawGrass(Shader shader, unsigned int VAO, unsigned int texture) {
+    shader.use();
+
+    shader.use();
+    glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
+                                            (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = programState->camera.GetViewMatrix();
+
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+
+    float yCoor = 0.3f;
+
+    vector<glm::vec3> vegetation {
+            glm::vec3(-10.0f, yCoor, 8.0f), glm::vec3(3.0f, yCoor, -6.0f),
+            glm::vec3(4.0f, yCoor, -15.0f), glm::vec3(10.0f, yCoor, -10.0f),
+            glm::vec3(-20.0f, yCoor, 0.0f), glm::vec3(0.0f, yCoor, 20.0f),
+            glm::vec3(-5.0f, yCoor, -10.0f), glm::vec3(7.0f, yCoor, 5.0f),
+            glm::vec3(2.0f, yCoor, 15.0f), glm::vec3(20.0f, yCoor, 3.0f),
+            glm::vec3(-8.0f, yCoor, -20.0f), glm::vec3(-2.0f, yCoor, 5.0f),
+            glm::vec3(18.0f, yCoor, 5.0f), glm::vec3(-5.0f, yCoor, -15.0f),
+            glm::vec3(-7.0f, yCoor, 12.0f), glm::vec3(15.0f, yCoor, -10.0f),
+            glm::vec3(-15.0f, yCoor, 15.0f), glm::vec3(12.0f, yCoor, -8.0f),
+            glm::vec3(5.0f, yCoor, -5.0f), glm::vec3(25.0f, yCoor, 20.0f)
+    };
+
+    for (unsigned int i = 0; i < vegetation.size(); i++) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, vegetation[i]);
+        model = glm::scale(model, glm::vec3(1.0f));
+        shader.setMat4("model", model);
+
+        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
+
+    for (unsigned int i = 0; i < vegetation.size(); i++) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, vegetation[i]);
+        model = glm::translate(model, glm::vec3(0.45f, 0.0f, 0.45f));
+        model = glm::scale(model, glm::vec3(1.0f));
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        shader.setMat4("model", model);
+
+        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
