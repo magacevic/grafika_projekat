@@ -32,6 +32,8 @@ void drawPlane(Shader shader, unsigned int VAO, unsigned int texture);
 
 void drawGrass(Shader shader , unsigned int VAO, unsigned int texture);
 
+void drawHouse(Shader shader, Model houseModel);
+
 unsigned int loadCubemap(vector<std::string> faces);
 
 void drawSkybox(Shader skyboxShader, unsigned int skyboxVAO, unsigned int cubemapTexture);
@@ -245,8 +247,8 @@ int main() {
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
+    Model houseModel("resources/objects/Farmhouse/farmhouse_obj.obj");
+    houseModel.SetShaderTextureNamePrefix("material.");
 
     // load textures
     // -------------
@@ -365,12 +367,8 @@ int main() {
         lightingShader.setMat4("view", view);
 
         // render the loaded model
-//        glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::translate(model,
-//                               programState->backpackPosition); // translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
-//        lightingShader.setMat4("model", model);
-//        ourModel.Draw(lightingShader);
+
+        drawHouse(lightingShader, houseModel);
 
         drawPlane(lightingShader, planeVAO, planeTexture);
 
@@ -466,6 +464,14 @@ void drawPlane(Shader shader, unsigned int VAO, unsigned int texture) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+void drawHouse(Shader shader, Model houseModel) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model,glm::vec3(0.0f));
+    model = glm::scale(model, glm::vec3(0.25f));
+    shader.setMat4("model", model);
+    houseModel.Draw(shader);
 }
 
 
