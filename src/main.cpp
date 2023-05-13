@@ -34,6 +34,8 @@ void drawGrass(Shader shader , unsigned int VAO, unsigned int texture);
 
 void drawHouse(Shader shader, Model houseModel);
 
+void drawBall(Shader shader, Model ballModel);
+
 unsigned int loadCubemap(vector<std::string> faces);
 
 void drawSkybox(Shader skyboxShader, unsigned int skyboxVAO, unsigned int cubemapTexture);
@@ -250,6 +252,9 @@ int main() {
     Model houseModel("resources/objects/Farmhouse/farmhouse_obj.obj");
     houseModel.SetShaderTextureNamePrefix("material.");
 
+    Model ballModel("resources/objects/ball/10536_soccerball_V1_iterations-2.obj");
+    houseModel.SetShaderTextureNamePrefix("material.");
+
     // load textures
     // -------------
 
@@ -367,13 +372,13 @@ int main() {
         lightingShader.setMat4("view", view);
 
         // render the loaded model
+        drawBall(lightingShader, ballModel);
 
         drawHouse(lightingShader, houseModel);
 
         drawPlane(lightingShader, planeVAO, planeTexture);
 
         drawGrass(blendingShader , grassVAO, grassTexture);
-
         drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
 
         if (programState->ImGuiEnabled)
@@ -450,7 +455,6 @@ unsigned int loadTexture(char const * path, bool gammaCorrection) {
 }
 
 void drawPlane(Shader shader, unsigned int VAO, unsigned int texture) {
-    glCullFace(GL_FRONT);
     glm::mat4 model = glm::mat4(1.0f);
 
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -472,6 +476,17 @@ void drawHouse(Shader shader, Model houseModel) {
     model = glm::scale(model, glm::vec3(0.25f));
     shader.setMat4("model", model);
     houseModel.Draw(shader);
+}
+
+void drawBall(Shader shader, Model ballModel) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model,glm::vec3(0.0f, 0.78f, -3.6f));
+
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, glm::vec3(0.03f));
+    shader.setMat4("model", model);
+    ballModel.Draw(shader);
 }
 
 
