@@ -379,13 +379,20 @@ int main() {
 
         // render the loaded model
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+
         drawBall(lightingShader, ballModel);
 
         drawHouse(lightingShader, houseModel);
 
         drawLamp(lightingShader, lampModel);
 
+        glCullFace(GL_FRONT);
+
         drawPlane(lightingShader, planeVAO, planeTexture);
+
+        glDisable(GL_CULL_FACE);
 
         drawGrass(blendingShader , grassVAO, grassTexture);
 
