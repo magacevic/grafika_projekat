@@ -34,6 +34,8 @@ void drawGrass(Shader shader , unsigned int VAO, unsigned int texture);
 
 void drawHouse(Shader shader, Model houseModel);
 
+void drawLamp(Shader shader, Model lampModel);
+
 void drawBall(Shader shader, Model ballModel);
 
 unsigned int loadCubemap(vector<std::string> faces);
@@ -252,8 +254,11 @@ int main() {
     Model houseModel("resources/objects/Farmhouse/farmhouse_obj.obj");
     houseModel.SetShaderTextureNamePrefix("material.");
 
+    Model lampModel("resources/objects/lamp/SA_LD_Medieval_Horn_Lantern.obj");
+    lampModel.SetShaderTextureNamePrefix("material.");
+
     Model ballModel("resources/objects/ball/10536_soccerball_V1_iterations-2.obj");
-    houseModel.SetShaderTextureNamePrefix("material.");
+    ballModel.SetShaderTextureNamePrefix("material.");
 
     // load textures
     // -------------
@@ -349,20 +354,21 @@ int main() {
 
         // directional light
         lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        lightingShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        lightingShader.setVec3("dirLight.ambient", 0.17f, 0.17f, 0.17f);
+        lightingShader.setVec3("dirLight.diffuse", 0.35f, 0.35f, 0.35f);
         lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
         // point light
-        lightingShader.setVec3("pointLight.position", glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame)));
-        lightingShader.setVec3("pointLight.ambient", glm::vec3(0.1, 0.1, 0.1));
-        lightingShader.setVec3("pointLight.diffuse", glm::vec3(0.6, 0.6, 0.6));
-        lightingShader.setVec3("pointLight.specular", glm::vec3(1.0, 1.0, 1.0));
+        lightingShader.setVec3("pointLight.position", glm::vec3(0.01f, 2.5f, -4.0f));
+        lightingShader.setVec3("pointLight.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        lightingShader.setVec3("pointLight.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
+        lightingShader.setVec3("pointLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
         lightingShader.setFloat("pointLight.constant", 1.0f);
         lightingShader.setFloat("pointLight.linear", 0.09f);
         lightingShader.setFloat("pointLight.quadratic", 0.032f);
+
         lightingShader.setVec3("viewPosition", programState->camera.Position);
-        lightingShader.setFloat("material.shininess", 32.0f);
+        lightingShader.setFloat("material.shininess", 256.0f);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
@@ -372,13 +378,17 @@ int main() {
         lightingShader.setMat4("view", view);
 
         // render the loaded model
+
         drawBall(lightingShader, ballModel);
 
         drawHouse(lightingShader, houseModel);
 
+        drawLamp(lightingShader, lampModel);
+
         drawPlane(lightingShader, planeVAO, planeTexture);
 
         drawGrass(blendingShader , grassVAO, grassTexture);
+
         drawSkybox(skyboxShader, skyboxVAO, cubemapTexture);
 
         if (programState->ImGuiEnabled)
@@ -489,6 +499,14 @@ void drawBall(Shader shader, Model ballModel) {
     ballModel.Draw(shader);
 }
 
+void drawLamp(Shader shader, Model lampModel) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model,glm::vec3(1.5f, 3.0f, -3.0f));
+
+    model = glm::scale(model, glm::vec3(0.8f));
+    shader.setMat4("model", model);
+    lampModel.Draw(shader);
+}
 
 void drawGrass(Shader shader, unsigned int VAO, unsigned int texture) {
     shader.use();
